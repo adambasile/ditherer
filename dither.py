@@ -22,7 +22,7 @@ def dither(img):
         dithered[x, y] = 0.5 + np.sign(val) / 2
         error = val - np.sign(val) / 2
         current[x - 2 : x + 3, y - 2 : y + 3] += error * kernel
-    return dithered[2:-2, 2:-2]
+    return 255 * dithered[2:-2, 2:-2].astype("uint8")
 
 
 def read(path, size=None):
@@ -36,7 +36,7 @@ def read(path, size=None):
 def process(path, size, output_path):
     img = read(path, size)
     dithered = dither(img)
-    io.imsave(output_path, 255 * dithered.astype("uint8"))
+    io.imsave(output_path, dithered)
 
 
 if __name__ == "__main__":
