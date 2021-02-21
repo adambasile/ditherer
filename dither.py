@@ -8,11 +8,8 @@ def create_pixel_queue(img, offset_x, offset_y):
     x, y = np.mgrid[slice(img.shape[0]), slice(img.shape[1])]
     x, y = x.flatten() + offset_x, y.flatten() + offset_y
     flattened = img.flatten()
-    return [
-        (negabsval, int(sign), int(x), int(y))
-        for negabsval, sign, x, y in zip(-np.abs(flattened), np.sign(flattened), x, y)
-        if not np.isnan(negabsval)
-    ]
+    out = np.array([-np.abs(flattened), np.sign(flattened), x, y]).transpose()[~np.isnan(flattened)].reshape(-1, 4)
+    return [tuple(pixel) for pixel in out.tolist()]
 
 
 def pop_pixel(pixel_queue, to_ignore):
@@ -21,7 +18,8 @@ def pop_pixel(pixel_queue, to_ignore):
         pixel = heapq.heappop(pixel_queue)
         if not pixel_queue:
             return None
-    return pixel
+    val, sign, x, y = pixel
+    return val, sign, int(x), int(y)
 
 
 def dither(img):
