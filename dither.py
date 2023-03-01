@@ -1,4 +1,5 @@
 import heapq
+from decimal import Decimal, ROUND_HALF_UP
 
 import numpy as np
 from skimage import io, color, transform, filters
@@ -69,7 +70,10 @@ def read(path, size=None):
     if size is None:
         return raw_img
     else:
-        return transform.resize(raw_img, (size * np.array(raw_img.shape[:2]) / max(raw_img.shape[:2])).round())
+        ratio = Decimal(size) / max(*raw_img.shape[:2])
+        return transform.resize(
+            raw_img, tuple(int((ratio * i).to_integral_value(ROUND_HALF_UP)) for i in raw_img.shape[:2])
+        )
 
 
 def process(path, size, output_path):
