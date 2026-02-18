@@ -73,9 +73,3 @@ def read(path, size=None):
     return transform.resize(
         raw_img, tuple(int((ratio * i).to_integral_value(ROUND_HALF_UP)) for i in raw_img.shape[:2])
     )
-
-
-def process(path, size, output_path):
-    img = read(path, size)
-    dithered = dither(img)
-    io.imsave(output_path, dithered)
