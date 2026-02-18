@@ -1,8 +1,8 @@
 import heapq
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 import numpy as np
-from skimage import io, color, transform, filters
+from skimage import color, filters, io, transform
 
 
 def create_pixel_queue(img, offset_x, offset_y):
@@ -39,7 +39,7 @@ def dither(img):
     kernel[2, 2] = 0
     kernel = kernel / kernel.sum()
 
-    for i in range(img.size):
+    for _i in range(img.size):
         pixel = pop_pixel(pixel_queue, to_ignore)
         if pixel is None:
             break
@@ -69,11 +69,10 @@ def read(path, size=None):
     raw_img = color.rgb2lab(io.imread(path)[:, :, :3])[:, :, 0] / 100
     if size is None:
         return raw_img
-    else:
-        ratio = Decimal(size) / max(*raw_img.shape[:2])
-        return transform.resize(
-            raw_img, tuple(int((ratio * i).to_integral_value(ROUND_HALF_UP)) for i in raw_img.shape[:2])
-        )
+    ratio = Decimal(size) / max(*raw_img.shape[:2])
+    return transform.resize(
+        raw_img, tuple(int((ratio * i).to_integral_value(ROUND_HALF_UP)) for i in raw_img.shape[:2])
+    )
 
 
 def process(path, size, output_path):
