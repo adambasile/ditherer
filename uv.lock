@@ -17,7 +17,6 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
-    { name = "pytest" },
     { name = "scikit-image" },
     { name = "typer" },
 ]
@@ -31,7 +30,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "numpy", specifier = ">=2.4.2" },
-    { name = "pytest", specifier = ">=9.0.2" },
     { name = "scikit-image", specifier = ">=0.26.0" },
     { name = "typer", specifier = ">=0.24.0" },
 ]
