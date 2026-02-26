@@ -111,9 +111,9 @@ fn dither_img(img: &ImageBuffer<Luma<f32>, Vec<f32>>) -> ImageBuffer<Luma<u8>, V
         let error = &kernel
             * (50.0 - errorpixel.error)
             * match errorpixel.sign {
-            Sign::Positive => -1.0,
-            Sign::Negative => 1.0,
-        };
+                Sign::Positive => -1.0,
+                Sign::Negative => 1.0,
+            };
         add_error(&mut err_img, error, xy);
         errorheap = create_pixel_queue(&err_img); // TODO: only do the pixels we've changed
     }
