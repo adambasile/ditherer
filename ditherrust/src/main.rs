@@ -1,5 +1,5 @@
 use std::cmp::Ordering;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, HashSet};
 use std::env;
 use std::path::Path;
 
@@ -114,8 +114,8 @@ fn dither_img(img: &ImageBuffer<Luma<f32>, Vec<f32>>) -> ImageBuffer<Luma<u8>, V
                 Sign::Positive => -1.0,
                 Sign::Negative => 1.0,
             };
-        add_error(&mut err_img, error, xy);
-        errorheap = create_pixel_queue(&err_img); // TODO: only do the pixels we've changed
+        let changed_pixels = add_error(&mut err_img, error, xy);
+        errorheap.extend(get_pixels(&err_img, Some(changed_pixels)))
     }
     let out_img = ImageBuffer::from_fn(img.width(), img.height(), |x, y| {
         Luma([out[[x as usize, y as usize]]])
@@ -127,11 +127,12 @@ fn add_error(
     err_img: &mut ArrayBase<OwnedRepr<f32>, Ix2>,
     error: Array<f32, Ix2>,
     centre: [usize; 2],
-) {
+) -> HashSet<[usize; 2]> {
     let [error_width, error_height] = error.shape() else {
         unreachable!()
     };
     let [centre_x, centre_y] = centre;
+    let mut changed_pixels = HashSet::<[usize; 2]>::new();
     for i in 0..error_width.clone() {
         for j in 0..error_height.clone() {
             let x;
@@ -152,13 +153,26 @@ fn add_error(
                 continue;
             }
             err_img[[x, y]] += error[[i, j]];
+            changed_pixels.insert([x, y]);
         }
     }
+    changed_pixels
 }
 
 fn create_pixel_queue(err_img: &ArrayBase<OwnedRepr<f32>, Ix2>) -> BinaryHeap<ErrorPixel> {
-    let x1: Vec<ErrorPixel> = err_img
+    BinaryHeap::from(get_pixels(err_img, None).collect::<Vec<_>>())
+}
+
+fn get_pixels(
+    err_img: &ArrayBase<OwnedRepr<f32>, Ix2>,
+    changed_pixels: Option<HashSet<[usize; 2]>>,
+) -> impl Iterator<Item = ErrorPixel> + use<'_> {
+    err_img
         .indexed_iter()
+        .filter(move |((x, y), _)| match &changed_pixels {
+            None => true,
+            Some(set) => set.contains(&[*x, *y]),
+        })
         .map(|((x, y), error)| ErrorPixel {
             error: error.abs(),
             sign: if error.clone() < 0.0 {
@@ -169,7 +183,4 @@ fn create_pixel_queue(err_img: &ArrayBase<OwnedRepr<f32>, Ix2>) -> BinaryHeap<Er
             x,
             y,
         })
-        .collect();
-    let errorheap: BinaryHeap<ErrorPixel> = BinaryHeap::from(x1);
-    errorheap
 }
