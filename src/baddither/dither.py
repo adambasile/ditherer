@@ -1,7 +1,8 @@
 import heapq
+from decimal import ROUND_HALF_UP, Decimal
 
 import numpy as np
-from skimage import io, color, transform, filters
+from skimage import color, filters, io, transform
 
 
 def create_pixel_queue(img, offset_x, offset_y):
@@ -38,7 +39,7 @@ def dither(img):
     kernel[2, 2] = 0
     kernel = kernel / kernel.sum()
 
-    for i in range(img.size):
+    for _i in range(img.size):
         pixel = pop_pixel(pixel_queue, to_ignore)
         if pixel is None:
             break
@@ -68,24 +69,7 @@ def read(path, size=None):
     raw_img = color.rgb2lab(io.imread(path)[:, :, :3])[:, :, 0] / 100
     if size is None:
         return raw_img
-    else:
-        return transform.resize(raw_img, (size * np.array(raw_img.shape[:2]) / max(raw_img.shape[:2])).round())
-
-
-def process(path, size, output_path):
-    img = read(path, size)
-    dithered = dither(img)
-    io.imsave(output_path, dithered)
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Dither an image.")
-    parser.add_argument("input", type=str, help="path of image to dither")
-    parser.add_argument("output", type=str, help="output path")
-    parser.add_argument(
-        "-s", "--size", type=int, help="Proportionally resize largest dimension of image to this value before dithering"
+    ratio = Decimal(size) / max(*raw_img.shape[:2])
+    return transform.resize(
+        raw_img, tuple(int((ratio * i).to_integral_value(ROUND_HALF_UP)) for i in raw_img.shape[:2])
     )
-    args = parser.parse_args()
-    process(args.input, args.size, args.output)

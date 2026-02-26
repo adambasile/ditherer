@@ -1,0 +1,61 @@
+[project]
+name = "baddither"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Adam Basile", email = "basile.adam@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "numpy>=2.4.2",
+    "scikit-image>=0.26.0",
+    "typer>=0.24.0",
+]
+
+[project.scripts]
+baddither = "baddither.cli:app"
+
+[build-system]
+requires = ["uv_build>=0.10.4,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.15.1",
+]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+
+
+[tool.ruff.lint]
+extend-select = [
+    "F",
+    "E",
+    "W",
+    "I",
+    "N",
+    "UP",
+    "ASYNC",
+    "BLE",
+    "B",
+    "A",
+    "C4",
+    "DTZ",
+    "ISC",
+    "ICN",
+    "PIE",
+    "PT",
+    "RET",
+    "SIM",
+    "PTH",
+    "PLR",
+    "TRY",
+    "PERF",
+    "RUF",
+]
+ignore = ["TRY003"]
+extend-safe-fixes = ["PT006", "PT007"]
