@@ -1,7 +1,6 @@
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashSet};
 use std::env;
-use std::path::Path;
 
 use image::imageops::FilterType;
 use image::{open, ImageBuffer, Luma, Pixel, Rgb32FImage};
@@ -13,9 +12,10 @@ fn main() {
     use std::time::Instant;
     let now = Instant::now();
 
-    let args: Vec<String> = env::args().collect();
-    let infile = Path::new(&args[1]);
-    let outfile = Path::new(&args[2]);
+    let mut args = env::args().skip(1);
+
+    let infile = args.next().expect("Missing input file argument");
+    let outfile = args.next().expect("Missing output file argument");
 
     println!("Reading {:?}", infile);
     let raw_img = open(infile).unwrap();
@@ -40,8 +40,7 @@ fn convert_luminance_to_int(
 ) -> ImageBuffer<Luma<u8>, Vec<u8>> {
     ImageBuffer::from_fn(img.width(), img.height(), |x, y| {
         let pixel = img.get_pixel(x, y);
-        let l: Luma<u8> = Luma([(pixel.channels()[0] * u8::MAX as f32 / 100.0).round() as u8]);
-        l
+        Luma([(pixel.channels()[0] * u8::MAX as f32 / 100.0).round() as u8])
     })
 }
 
@@ -54,8 +53,7 @@ fn convert_img_to_relative_luminance(img: &Rgb32FImage) -> ImageBuffer<Luma<f32>
             pixel.channels()[2],
         );
         let lab: Lab<D65, f32> = raw.into_color();
-        let luma: Luma<f32> = Luma([lab.l]);
-        luma
+        Luma([lab.l])
     })
 }
 
@@ -133,22 +131,16 @@ fn add_error(
     };
     let [centre_x, centre_y] = centre;
     let mut changed_pixels = HashSet::<[usize; 2]>::new();
-    for i in 0..error_width.clone() {
-        for j in 0..error_height.clone() {
-            let x;
-            let y;
-            match (centre_x + i).checked_sub(error_width / 2) {
-                None => {
-                    continue;
-                }
-                Some(val) => x = val,
-            }
-            match (centre_y + j).checked_sub(error_height / 2) {
-                None => {
-                    continue;
-                }
-                Some(val) => y = val,
-            }
+    for i in 0..*error_width {
+        for j in 0..*error_height {
+            let x = match (centre_x + i).checked_sub(error_width / 2) {
+                None => continue,
+                Some(val) => val,
+            };
+            let y = match (centre_y + j).checked_sub(error_height / 2) {
+                None => continue,
+                Some(val) => val,
+            };
             if (x + 1 > err_img.shape()[0]) || (y + 1 > err_img.shape()[1]) {
                 continue;
             }
@@ -173,9 +165,9 @@ fn get_pixels(
             None => true,
             Some(set) => set.contains(&[*x, *y]),
         })
-        .map(|((x, y), error)| ErrorPixel {
+        .map(|((x, y), &error)| ErrorPixel {
             error: error.abs(),
-            sign: if error.clone() < 0.0 {
+            sign: if error < 0.0 {
                 Sign::Negative
             } else {
                 Sign::Positive
